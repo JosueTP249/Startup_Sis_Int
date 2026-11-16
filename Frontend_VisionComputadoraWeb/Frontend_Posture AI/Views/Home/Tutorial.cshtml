@@ -1,0 +1,41 @@
+﻿@{
+    ViewData["Title"] = "Cómo Funciona";
+}
+
+<div class="container my-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-bold text-primary">Tecnología de Visión Biométrica</h1>
+        <p class="lead text-muted">Evalúa y corrige tu postura corporal en tres sencillos pasos usando solo tu cámara web.</p>
+    </div>
+
+    <div class="row align-items-center mb-5">
+        <div class="col-md-6 order-md-2">
+            <!-- La ruta ~/ apunta a la carpeta wwwroot -->
+            <img src="~/imagen/paso1_camara.jpg" alt="Paso 1" class="img-fluid rounded shadow-sm border">
+        </div>
+        <div class="col-md-6 order-md-1 text-md-end pr-md-5">
+            <h3 class="fw-bold">1. Enciende tu cámara</h3>
+            <p class="text-muted">Nuestra plataforma solicita acceso seguro a tu cámara web.</p>
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-5">
+        <div class="col-md-6">
+            <img src="~/imagen/paso2_vectores.jpg" alt="Paso 2" class="img-fluid rounded shadow-sm border">
+        </div>
+        <div class="col-md-6 pl-md-5">
+            <h3 class="fw-bold">2. Extracción de Nodos</h3>
+            <p class="text-muted">Utilizando tecnología MediaPipe de Google, mapeamos 33 puntos articulares en tiempo real. Extraemos vectores matemáticos (X, Y, Z) que representan la geometría exacta de tu cuerpo.</p>
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-5">
+        <div class="col-md-6 order-md-2">
+            <img src="~/imagen/paso3_ia.jpg" alt="Paso 3" class="img-fluid rounded shadow-sm border">
+        </div>
+        <div class="col-md-6 order-md-1 text-md-end pr-md-5">
+            <h3 class="fw-bold">3. Inferencia de IA</h3>
+            <p class="text-muted">Nuestra Red Neuronal procesa los vectores en milisegundos y clasifica tu postura anatómica, devolviendo retroalimentación visual inmediata para corregir desviaciones y prevenir lesiones.</p>
+        </div>
+    </div>
+</div>

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using System.Text.Json.Nodes;
+using Frontedn_Posture_AI.Models;
 
 namespace Frontedn_Posture_AI.Controllers
 {
@@ -11,54 +11,49 @@ namespace Frontedn_Posture_AI.Controllers
     {
         private readonly InferenceSession _session;
 
-        // El constructor carga el modelo ONNX en memoria cuando la API arranca
-        public EvaluacionFisicaController()
+        // Inyección de dependencias configurada en Program.cs
+        public EvaluacionFisicaController(InferenceSession session)
         {
-            // Ajusta la ruta a donde guardaron el modelo exportado desde Python
-            _session = new InferenceSession("MLModels/postura_model.onnx");
+            _session = session;
         }
 
         [HttpPost("Clasificar")]
-        public IActionResult Clasificar([FromBody] JsonObject payload)
+        public IActionResult Clasificar([FromBody] PostureRequest payload)
         {
+            if (payload?.Keypoints == null || payload.Keypoints.Count == 0)
+            {
+                return BadRequest(new { estado = "error", mensaje = "Faltan coordenadas." });
+            }
+
             try
             {
-                // 1. Extraer los datos numéricos (x, y, z, visibilidad) del JSON enviado por MediaPipe
-                var keypoints = payload["keypoints"]?.AsArray();
-                if (keypoints == null || keypoints.Count == 0)
-                {
-                    return BadRequest("No se detectaron landmarks del cuerpo.");
-                }
-
-                // 2. Aplanar los datos para el Perceptrón Multicapa (MLP)
-                // MediaPipe detecta 33 puntos, cada uno con x, y, z, visibility.
-                // Ajusta este tamaño según con cuántas variables entrenaron el modelo en Colab
-                float[] inputData = new float[33 * 4];
+                //Aplanar el arreglo de clases a un arreglo unidimensional
+                //MediaPipe envía 33 puntos con 4 valores (X,Y,Z,Visibility) = 132 entradas
+                float[] inputData = new float[payload.Keypoints.Count * 4];
                 int index = 0;
 
-                foreach (var kp in keypoints)
+                foreach (var kp in payload.Keypoints)
                 {
-                    inputData[index++] = (float)kp["x"];
-                    inputData[index++] = (float)kp["y"];
-                    inputData[index++] = (float)kp["z"];
-                    inputData[index++] = (float)kp["visibility"];
+                    inputData[index++] = kp.X;
+                    inputData[index++] = kp.Y;
+                    inputData[index++] = kp.Z;
+                    inputData[index++] = kp.Visibility;
                 }
 
-                // 3. Crear el tensor para ONNX
+                //Crear Tensor para ONNX
                 var tensor = new DenseTensor<float>(inputData, new[] { 1, inputData.Length });
+
+                //"dense_input" es el nombre típico, pero depende de cómo lo exportó el Científico de Datos.
                 var inputs = new List<NamedOnnxValue>
                 {
-                    // "dense_input" debe coincidir con el nombre de la capa de entrada de tu modelo Keras
                     NamedOnnxValue.CreateFromTensor("dense_input", tensor)
                 };
 
-                // 4. Ejecutar la inferencia (¡la magia de la IA ocurre aquí!)
+                //Ejecutar Inferencia
                 using var results = _session.Run(inputs);
-
-                // 5. Obtener los resultados (probabilidades softmax)
                 var outputTensor = results.First().AsTensor<float>();
 
-                // 6. Encontrar la clase con mayor probabilidad
+                //Calcular el ArgMax (La clase ganadora)
                 float maxProb = -1;
                 int maxIndex = -1;
                 for (int i = 0; i < outputTensor.Length; i++)
@@ -70,20 +65,19 @@ namespace Frontedn_Posture_AI.Controllers
                     }
                 }
 
-                // 7. Mapear el índice a tu lógica de negocio y devolver respuesta al frontend
-                if (maxIndex == 0) // Asumiendo que 0 es postura incorrecta/peligro
+                //Respuesta de Negocio
+                return maxIndex switch
                 {
-                    return Ok(new { estado = "Peligro", mensaje = "¡Corrige tu postura!" });
-                }
-                else
-                {
-                    return Ok(new { estado = "Bien", mensaje = "Postura correcta. Mantén así." });
-                }
-
+                    0 => Ok(new { estado = "Peligro", mensaje = "Espalda encorvada. \n Observacio[Peligro de lesión]" }),
+                    1 => Ok(new { estado = "Bien", mensaje = "Postura correcta. \n Observacio[Sigue asi]" }),
+                    _ => Ok(new { estado = "Neutro", mensaje = "Analizando movimiento..." })
+                };
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { estado = "error", mensaje = "Error en el servidor de IA." });
+                // Registramos el error internamente pero no rompemos la app del cliente
+                Console.WriteLine($"Error de inferencia: {ex.Message}");
+                return StatusCode(500, new { estado = "error", mensaje = "Fallo en el análisis biométrico." });
             }
         }
     }

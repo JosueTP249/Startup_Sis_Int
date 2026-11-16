@@ -1,7 +1,16 @@
+using Microsoft.ML.OnnxRuntime;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// INYECCION DEL MODELO IA (Singleton)
+builder.Services.AddSingleton<InferenceSession>(sp =>
+{
+    // Asegúrate de que tu compañero de Datos te pase el archivo o crea uno temporal para que no falle.
+    return new InferenceSession("MLModels/postura_model.onnx");
+});
 
 var app = builder.Build();
 
