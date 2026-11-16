@@ -1,0 +1,74 @@
+
+# ==========================================
+# ASP.NET CORE / .NET
+# ==========================================
+
+# Carpetas de compilación
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Archivos de publicación
+publish/
+artifacts/
+out/
+
+# ==========================================
+# CONFIGURACIONES Y SECRETOS
+# ==========================================
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Configuraciones locales que pueden contener secretos
+appsettings.Development.json
+appsettings.Local.json
+
+# Certificados y claves privadas
+*.pfx
+*.p12
+*.key
+*.pem
+
+# ==========================================
+# LOGS Y ARCHIVOS TEMPORALES
+# ==========================================
+
+*.log
+logs/
+*.tmp
+*.temp
+
+# ==========================================
+# SISTEMA OPERATIVO
+# ==========================================
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+
+# ==========================================
+# EDITORES
+# ==========================================
+
+# Visual Studio Code
+.vscode/
+
+# ==========================================
+# PRUEBAS Y COBERTURA
+# ==========================================
+
+TestResults/
+coverage/
