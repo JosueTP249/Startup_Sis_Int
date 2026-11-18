@@ -24,12 +24,10 @@ namespace Frontedn_Posture_AI.Controllers
             {
                 return BadRequest(new { estado = "error", mensaje = "Faltan coordenadas." });
             }
-
             try
             {
-                //Aplanar el arreglo de clases a un arreglo unidimensional
-                //MediaPipe envía 33 puntos con 4 valores (X,Y,Z,Visibility) = 132 entradas
-                float[] inputData = new float[payload.Keypoints.Count * 4];
+                //Aplanar los datos: MediaPipe 33 puntos. 
+                float[] inputData = new float[33 * 3];
                 int index = 0;
 
                 foreach (var kp in payload.Keypoints)
@@ -37,23 +35,22 @@ namespace Frontedn_Posture_AI.Controllers
                     inputData[index++] = kp.X;
                     inputData[index++] = kp.Y;
                     inputData[index++] = kp.Z;
-                    inputData[index++] = kp.Visibility;
                 }
 
-                //Crear Tensor para ONNX
-                var tensor = new DenseTensor<float>(inputData, new[] { 1, inputData.Length });
+                //Tensor para ONNX con la forma exacta  Netron: [1, 33, 3]
+                var tensor = new DenseTensor<float>(inputData, new[] { 1, 33, 3 });
 
-                //"dense_input" es el nombre típico, pero depende de cómo lo exportó el Científico de Datos.
+                //Usar el nombre Netron: "landmarks"
                 var inputs = new List<NamedOnnxValue>
-                {
-                    NamedOnnxValue.CreateFromTensor("dense_input", tensor)
-                };
+    {
+        NamedOnnxValue.CreateFromTensor("landmarks", tensor)
+    };
 
                 //Ejecutar Inferencia
                 using var results = _session.Run(inputs);
                 var outputTensor = results.First().AsTensor<float>();
 
-                //Calcular el ArgMax (La clase ganadora)
+                //Calcular el ArgMax (La clase ganadora entre las 13 posibles)
                 float maxProb = -1;
                 int maxIndex = -1;
                 for (int i = 0; i < outputTensor.Length; i++)
@@ -65,13 +62,33 @@ namespace Frontedn_Posture_AI.Controllers
                     }
                 }
 
-                //Respuesta de Negocio
-                return maxIndex switch
+                // 6. Respuesta de Negocio
+                string estado = "Bien"; // Por defecto
+                string mensaje = "";
+
+                switch (maxIndex)
                 {
-                    0 => Ok(new { estado = "Peligro", mensaje = "Espalda encorvada. \n Observacio[Peligro de lesión]" }),
-                    1 => Ok(new { estado = "Bien", mensaje = "Postura correcta. \n Observacio[Sigue asi]" }),
-                    _ => Ok(new { estado = "Neutro", mensaje = "Analizando movimiento..." })
-                };
+                    case 0: mensaje = "Puente de glúteo (Abajo)"; break;
+                    case 1: mensaje = "Puente de glúteo (Arriba)"; break;
+                    case 2: mensaje = "Elevación de rodillas (Abajo)"; break;
+                    case 3: mensaje = "Elevación de rodillas (Arriba)"; break;
+                    case 4: mensaje = "Elevación lateral de pierna (Abajo)"; break;
+                    case 5: mensaje = "Elevación lateral de pierna (Arriba)"; break;
+                    case 6: mensaje = "Elevación lateral de brazos (Abajo)"; break;
+                    case 7: mensaje = "Elevación lateral de brazos (Arriba)"; break;
+                    case 8: mensaje = "Elevación de piernas (Abajo)"; break;
+                    case 9: mensaje = "Elevación de piernas (Arriba)"; break;
+                    case 10: mensaje = "Flexión de hombro (Arriba)"; break;
+                    case 11: mensaje = "Press de hombro (Abajo)"; break;
+                    case 12: mensaje = "Press de hombro (Arriba)"; break;
+                    default:
+                        mensaje = $"Postura desconocida ({maxIndex})";
+                        estado = "Peligro";
+                        break;
+                }
+
+                
+                return Ok(new { estado = estado, mensaje = mensaje });
             }
             catch (Exception ex)
             {
