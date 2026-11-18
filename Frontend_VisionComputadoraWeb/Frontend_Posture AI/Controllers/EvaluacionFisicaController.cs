@@ -50,9 +50,11 @@ namespace Frontedn_Posture_AI.Controllers
                 using var results = _session.Run(inputs);
                 var outputTensor = results.First().AsTensor<float>();
 
-                //Calcular el ArgMax (La clase ganadora entre las 13 posibles)
+  
+
                 float maxProb = -1;
                 int maxIndex = -1;
+
                 for (int i = 0; i < outputTensor.Length; i++)
                 {
                     if (outputTensor.GetValue(i) > maxProb)
@@ -60,6 +62,14 @@ namespace Frontedn_Posture_AI.Controllers
                         maxProb = outputTensor.GetValue(i);
                         maxIndex = i;
                     }
+                }
+
+                //La confianza de la IA
+                if (maxProb < 0.90f)
+                {
+                    //Es menor al 90%, forzamos un índice que no existe
+                    //default y devuelva "Peligro"
+                    maxIndex = -1;
                 }
 
                 // 6. Respuesta de Negocio
