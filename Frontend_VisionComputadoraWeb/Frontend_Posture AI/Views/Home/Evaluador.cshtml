@@ -1,0 +1,22 @@
+﻿@{
+    ViewData["Title"] = "Evaluación de Postura";
+}
+
+<!-- Dependencias de MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<div class="pose-container">
+    <!-- Video oculto que captura la webcam -->
+    <video id="videoElement" style="display: none;" autoplay playsinline></video>
+
+    <!-- Canvas donde se renderiza el usuario y el esqueleto -->
+    <canvas id="canvasEsqueleto" width="640" height="480"></canvas>
+
+    <!-- Panel interactivo de feedback -->
+    <div id="alertaPostura" class="alerta-box">Encendiendo cámara...</div>
+</div>
+
+<!-- Lógica de detección -->
+<script src="~/js/app.js" defer></script>

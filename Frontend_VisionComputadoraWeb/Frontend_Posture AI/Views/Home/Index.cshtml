@@ -1,22 +1,154 @@
 ﻿@{
-    ViewData["Title"] = "Evaluación de Postura";
+    ViewData["Title"] = "Inicio";
 }
 
-<!-- Dependencias de MediaPipe -->
-<script src="https://cdn.jsdelivr.net/npm/@@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<style>
+    :root {
+        --brand-dark: #0b3d42;
+        --brand-accent: #00b894;
+        --brand-light: #f0faf8;
+    }
 
-<div class="pose-container">
-    <!-- Video oculto que captura la webcam -->
-    <video id="videoElement" style="display: none;" autoplay playsinline></video>
-    
-    <!-- Canvas donde se renderiza el usuario y el esqueleto -->
-    <canvas id="canvasEsqueleto" width="640" height="480"></canvas>
-    
-    <!-- Panel interactivo de feedback -->
-    <div id="alertaPostura" class="alerta-box">Encendiendo cámara...</div>
+    .hero-section {
+        background: linear-gradient(135deg, #ffffff 0%, var(--brand-light) 100%);
+        border-radius: 1.25rem;
+    }
+
+    .btn-brand {
+        background-color: var(--brand-accent);
+        color: #ffffff;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+        .btn-brand:hover {
+            background-color: var(--brand-dark);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+    .text-brand-dark {
+        color: var(--brand-dark);
+    }
+
+    .text-brand-accent {
+        color: var(--brand-accent);
+    }
+
+    .pillar-card {
+        border-top: 4px solid var(--brand-accent);
+        border-radius: 0.75rem;
+    }
+</style>
+
+<div class="container my-4">
+    <!-- Hero Section -->
+    <div class="hero-section p-4 p-md-5 shadow-sm mb-5">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="badge rounded-pill px-3 py-2 mb-3" style="background-color: #d1f5ec; color: #0b3d42;">
+                    Plataforma SaaS B2B · Visión Biométrica &amp; IA
+                </span>
+                <h1 class="display-5 fw-bold text-brand-dark mb-3">
+                    Clínica rehabilitación inteligente desde tu cámara web
+                </h1>
+                <p class="lead text-muted mb-4">
+                    Evaluamos posturas y ejercicios físicos en tiempo real mediante Inteligencia Artificial.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a asp-controller="Home" asp-action="Evaluador" class="btn btn-brand btn-lg px-4 fw-semibold shadow-sm">
+                        Iniciar Evaluación en Vivo
+                    </a>
+                    <a asp-controller="Home" asp-action="Tutorial" class="btn btn-outline-secondary btn-lg px-4">
+                        Ver Cómo Funciona
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 text-center">
+                <img src="~/imagen/postura_model.jpeg"
+                     alt="Logotipo POSTURE AI"
+                     class="img-fluid rounded-4 shadow-sm bg-white p-3"
+                     style="max-height: 310px;" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Nuestra Historia y Visión -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="card-body">
+                    <h2 class="h4 fw-bold text-brand-dark mb-3">Nuestra Historia</h2>
+                    <p class="text-muted">
+                        El trabajo frente a pantallas convirtió las lesiones cervicales y lumbares en un problema
+                        cotidiano, mientras que miles de pacientes en rehabilitación abandonan sus ejercicios al no
+                        contar con guía fuera del consultorio.
+                    </p>
+                    <p class="text-muted mb-0">
+                        <strong>POSTURE AI</strong> nació para romper la barrera del hardware costoso: convertimos
+                        cualquier cámara web en un asistente biomecánico impulsado por visión por computadora y redes
+                        neuronales capaces de evaluar 33 nodos corporales en milisegundos.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4" style="background-color: #0b3d42; color: #ffffff;">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div>
+                        <h2 class="h4 fw-bold mb-3" style="color: #00d2a8;">Nuestra Visión</h2>
+                        <p class="mb-3" style="color: #e2f1f2;">
+                            Consolidarnos como el estándar de prevención ergonómica corporativa y telerrehabilitación
+                            en Latinoamérica, acercando diagnósticos posturales con Inteligencia Artificial a clínicas
+                            y empresas de cualquier tamaño.
+                        </p>
+                    </div>
+                    <div class="pt-3 border-top border-secondary">
+                        <small style="color: #9ed9ce;">
+                            Tecnología accesible · Arquitectura híbrida IA + Geometría.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3 Pilares -->
+    <div class="text-center mb-4">
+        <h2 class="h3 fw-bold text-brand-dark">¿Por qué elegir Posture KineCare?</h2>
+    </div>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card pillar-card h-100 border-0 shadow-sm p-3">
+                <div class="card-body">
+                    <h3 class="h5 fw-bold text-brand-dark">Precisión Biométrica</h3>
+                    <p class="text-muted mb-0">
+                        Combinamos modelos neuronales ONNX con reglas geométricas puras para clasificar posturas.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card pillar-card h-100 border-0 shadow-sm p-3">
+                <div class="card-body">
+                    <h3 class="h5 fw-bold text-brand-dark">Privacidad por Diseño</h3>
+                    <p class="text-muted mb-0">
+                        Gracias al enfoque <em>Edge Computing</em>, tu video nunca abandona el navegador; a nuestra
+                        API solo viajan coordenadas matemáticas anónimas.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card pillar-card h-100 border-0 shadow-sm p-3">
+                <div class="card-body">
+                    <h3 class="h5 fw-bold text-brand-dark">Despliegue Sin Fricción</h3>
+                    <p class="text-muted mb-0">
+                        Sin sensores, sin instalaciones pesadas y listo para ejecutarse en cualquier navegador moderno
+                        para equipos de trabajo o pacientes en casa.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<!-- Lógica de detección -->
-<script src="~/js/app.js" defer></script>
