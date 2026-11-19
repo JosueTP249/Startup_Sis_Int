@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
+using Frontedn_Posture_AI.Data;
 using Frontedn_Posture_AI.Models;
+using Frontedn_Posture_AI.Models.Entidades;
 
 namespace Frontedn_Posture_AI.Controllers
 {
@@ -10,15 +12,28 @@ namespace Frontedn_Posture_AI.Controllers
     public class EvaluacionFisicaController : ControllerBase
     {
         private readonly InferenceSession _session;
+        private readonly AppDbContext _db;
+        private readonly EstadoBaseDatos _estadoBd;
+        private readonly ControlRegistros _control;
+        private readonly ILogger<EvaluacionFisicaController> _logger;
 
         // Inyección de dependencias configurada en Program.cs
-        public EvaluacionFisicaController(InferenceSession session)
+        public EvaluacionFisicaController(
+            InferenceSession session,
+            AppDbContext db,
+            EstadoBaseDatos estadoBd,
+            ControlRegistros control,
+            ILogger<EvaluacionFisicaController> logger)
         {
             _session = session;
+            _db = db;
+            _estadoBd = estadoBd;
+            _control = control;
+            _logger = logger;
         }
 
         [HttpPost("Clasificar")]
-        public IActionResult Clasificar([FromBody] PostureRequest payload)
+        public async Task<IActionResult> Clasificar([FromBody] PostureRequest payload)
         {
             if (payload?.Keypoints == null || payload.Keypoints.Count == 0)
             {
@@ -26,7 +41,7 @@ namespace Frontedn_Posture_AI.Controllers
             }
             try
             {
-                //Aplanar los datos: MediaPipe 33 puntos. 
+                //Aplanar los datos: MediaPipe 33 puntos.
                 float[] inputData = new float[33 * 3];
                 int index = 0;
 
@@ -50,7 +65,7 @@ namespace Frontedn_Posture_AI.Controllers
                 using var results = _session.Run(inputs);
                 var outputTensor = results.First().AsTensor<float>();
 
-  
+
 
                 float maxProb = -1;
                 int maxIndex = -1;
@@ -97,7 +112,10 @@ namespace Frontedn_Posture_AI.Controllers
                         break;
                 }
 
-                
+                // 7. Persistencia en la base de datos (historial de ejercicios)
+                await GuardarEvaluacionAsync(payload.PacienteId ?? AppDbContext.PacienteDemoId,
+                                             maxIndex, mensaje, estado, maxProb);
+
                 return Ok(new { estado = estado, mensaje = mensaje });
             }
             catch (Exception ex)
@@ -105,6 +123,38 @@ namespace Frontedn_Posture_AI.Controllers
                 // Registramos el error internamente pero no rompemos la app del cliente
                 Console.WriteLine($"Error de inferencia: {ex.Message}");
                 return StatusCode(500, new { estado = "error", mensaje = "Fallo en el análisis biométrico." });
+            }
+        }
+
+        /// <summary>
+        /// Guarda la evaluación en EvaluacionesPosturales. Las posturas de riesgo
+        /// siempre se registran (limitadas a una cada 5 s por paciente) y los
+        /// ejercicios reconocidos solo cuando cambia la clase. Si la base de datos
+        /// falla, la respuesta de la IA al usuario no se interrumpe.
+        /// </summary>
+        private async Task GuardarEvaluacionAsync(int pacienteId, int claseIndex, string mensaje, string estado, float confianza)
+        {
+            if (!_estadoBd.Habilitada || !_control.DebeGuardar(pacienteId, estado, claseIndex))
+            {
+                return;
+            }
+
+            try
+            {
+                _db.EvaluacionesPosturales.Add(new EvaluacionPostural
+                {
+                    UsuarioId = pacienteId,
+                    EjercicioId = claseIndex >= 0 ? claseIndex : null,
+                    FechaHora = DateTime.UtcNow,
+                    ClaseDetectada = mensaje,
+                    Estado = estado,
+                    Confianza = confianza
+                });
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo guardar la evaluación del paciente {PacienteId}", pacienteId);
             }
         }
     }

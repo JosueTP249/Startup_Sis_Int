@@ -5,6 +5,9 @@ namespace Frontedn_Posture_AI.Models
     public class PostureRequest
     {
         public List<Landmark>? Keypoints { get; set; }
+
+        // Paciente evaluado. Si el frontend no lo envía se usa el paciente demo.
+        public int? PacienteId { get; set; }
     }
 
     public class Landmark
